@@ -1,0 +1,50 @@
+---
+title: "Cross-Stitch an Image with K-means Clustering"
+author: Yingxuan Niu 1003887252
+output: pdf_document
+---
+Learning Objective \newline
+\textit {Use K-means clustering in estimating the best number of clusters and produce colour strips to plot the cross-stitched pattern for an image.}
+
+\section{Introduction}
+This article requires imager, tidyverse, tidymodels, sp, scales, cowplot and dmc package. \newline 
+K-means clustering applies tidy data principles and allows users to use glance(), tidy() and augment() functions which are extremely helpful for statistical analysis.  \newline
+```{r, warning = FALSE, message = FALSE}
+source("functions.R")
+set.seed(1200)
+```
+
+\section{Clustering in R}
+The process_image function takes in the image file name and a list of number of cluster centres and outputs clustering information. Let's start by converting the desired image into a data frame for clustering. Then we will use the built in kmeans() function to conduct k-means clustering, which takes in the original image data frame. Along we produce glanced and tidied datasets for further use. Furthermore, with the use of for loops, we get the RGB values of cluster centres by using the rgb() function on R, G and B information. The DMC colour information is also acquired with the use of dmc() function on the RGB value. Both are attached to the tidied dataset to form a tibble. Finally, we attach the original image data frame for further use. The output is a list where the first element is a tibble of clustering information containing kclust, glanced and tidied datasets, and the second element is the original image data frame in order for further use. The output is stored in the variable cluster_info. \newline
+
+
+```{r, warning = FALSE, message = FALSE}
+#substitute value and run process_image function
+k_list = c(2:10)
+image_file_name = "314 image.jpg"
+cluster_info <- process_image(image_file_name, k_list)
+```
+\section{Plotting Scree Plot}
+We then produce the scree plot with the input as cluster_info outputted from the last function, where we utilize the glanced dataset and plot scree plots with k on the horizontal axis and ratio on the vertical axis. From the output ratio scree plot, it looks like k = 7 would be the best number of clusters that we can work with, since it explains around 90% of the data, and the ratio barely increases anymore after k = 7. \newline
+
+
+```{r}
+scree_plot(cluster_info[[1]])
+```
+\section{Plotting Colour Strips}
+We then plot the closest DMC colour to the cluster centre colour for every number of cluster centres in the k_list, so that we can see what each colour strip looks like for different k's. \newline In this case, when k>7, there appears to be a some repetitive colours; whereas when k<7, the colour strip is not representative enough of the colours appeared in the image. Thus we choose k=7 to be the number of clusters. \newline
+
+
+```{r}
+colour_strips(cluster_info[[1]])
+```
+\section{Making Cross-Stitch Pattern}
+
+To make a cross-stitch pattern by inputting cluster_info, the number of clusters we chose, x_size and colours, first we want to augment the original data frame with the cluster centre and RGB information using the augment() function. In this way, each data point is assigned to a cluster. Then we produce a lower resolution image by summarizing the non-coordinate columns in the data frame with their most common value in the large grid cell, therefore outputs a data frame with the same column names as the original frame, but with fewer entries that corresponds to the reduced resolution image. \newline After reducing the resolution, we plot the cross stitch pattern with ggplot. By setting colour = cluster and shape = cluster, ggplot differentiates each pixel by its cluster ID and thus each pixel has the colour of its cluster centre. 
+
+
+```{r, warning = FALSE, message = FALSE}
+make_pattern(cluster_info, k=6, x_size= 50, black_white=FALSE, background_colour=NULL)
+```
+
+
